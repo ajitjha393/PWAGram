@@ -6,10 +6,10 @@ var closeCreatePostModalButton = document.querySelector(
 
 function openCreatePostModal() {
   createPostArea.style.display = "block";
-  if (deferredPrompt) {
-    deferredPrompt.prompt(); //This shows the banner
+  if (!window.installPrompt.hasBeenShown) {
+    window.deferredPrompt.prompt(); //This shows the banner
 
-    deferredPrompt.userChoice.then(function(choiceResult) {
+    window.deferredPrompt.userChoice.then(function(choiceResult) {
       console.log(choiceResult.outcome);
 
       if (choiceResult.outcome == "dismissed") {
@@ -18,7 +18,7 @@ function openCreatePostModal() {
         console.log("User added to home screen");
       }
     });
-    deferredPrompt = null;
+    window.installPrompt.hasBeenShown = true;
   }
 }
 
