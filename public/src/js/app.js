@@ -5,11 +5,17 @@
 // If path starts with / it means root folder
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").then(() => {
-    console.log("Service worker registered");
-  });
+  navigator.serviceWorker
+    .register("/sw.js")
+    .then(() => {
+      console.log("Service worker registered");
+    })
+    .catch(err => {
+      console.log(err);
+    });
 }
 
+// Primitive variables are not passed to window object
 window.installPrompt = {
   hasBeenShown: false
 };
