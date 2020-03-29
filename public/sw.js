@@ -1,8 +1,12 @@
+const CACHE_STATIC_NAME = "static-v4";
+const CACHE_DYNAMIC_NAME = "dynamic-v2";
+
 self.addEventListener("install", event => {
   console.log("[Service Worker] Installing service worker ...", event);
   // Precaching of app assets (app shell)
   event.waitUntil(
-    caches.open("static").then(cache => {
+    // This is done for versioning of cache
+    caches.open(CACHE_STATIC_NAME).then(cache => {
       console.log("[Service Worker] Precaching app shell");
       // cache.add("/");
       // cache.add("/index.html");
@@ -26,8 +30,24 @@ self.addEventListener("install", event => {
   );
 });
 
+// Here we do cleanup of our previous cache
 self.addEventListener("activate", event => {
   console.log("[Service Worker] Activating service worker ...", event);
+
+  // Wait until we done with cleanup
+  event.waitUntil(
+    caches.keys().then(keyList => {
+      return Promise.all(
+        keyList.map(key => {
+          if (key !== CACHE_STATIC_NAME && key !== CACHE_DYNAMIC_NAME) {
+            console.log("[Service Worker] removing old cache ... ", key);
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
+
   return self.clients.claim();
 });
 
@@ -40,7 +60,15 @@ self.addEventListener("fetch", event => {
       if (response) {
         return response;
       } else {
-        return fetch(event.request);
+        // Adding to cache dynamically
+        return fetch(event.request)
+          .then(res => {
+            return caches.open(CACHE_DYNAMIC_NAME).then(cache => {
+              cache.put(event.request.url, res.clone());
+              return res;
+            });
+          })
+          .catch(err => {});
       }
     })
   );
