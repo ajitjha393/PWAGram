@@ -49,6 +49,25 @@ function createCard() {
   cardSupportingText.className = "mdl-card__supporting-text";
   cardSupportingText.textContent = "In San Francisco";
   cardSupportingText.style.textAlign = "center";
+
+  // This was for dynamic caching on demand
+  // But i currently dont have a use case :(
+
+  // const cardSaveButton = document.createElement("button");
+  // cardSaveButton.textContent = "Save";
+
+  // cardSaveButton.addEventListener("click", event => {
+  //   console.log("clicked");
+  //   if ("caches" in window) {
+  //     caches.open("user-requested").then(cache => {
+  //       cache.add("https://httpbin.org/get");
+  //       cache.add("/src/images/sf-boat.jpg");
+  //     });
+  //   }
+  // });
+
+  //cardSupportingText.appendChild(cardSaveButton);
+
   cardWrapper.appendChild(cardSupportingText);
   componentHandler.upgradeElement(cardWrapper);
   sharedMomentsArea.appendChild(cardWrapper);
