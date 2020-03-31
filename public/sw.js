@@ -77,7 +77,7 @@ function isInArray(string, array) {
 // Cache then network
 
 self.addEventListener("fetch", event => {
-  let url = "https://httpbin.org/get";
+  let url = "https://pwagram-a86f0.firebaseio.com/posts.json";
 
   if (event.request.url.indexOf(url) > -1) {
     event.respondWith(
