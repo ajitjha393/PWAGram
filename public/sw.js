@@ -1,4 +1,7 @@
-const CACHE_STATIC_NAME = "static-v11";
+importScripts("/src/js/idb.js");
+importScripts("/src/js/utility.js");
+
+const CACHE_STATIC_NAME = "static-v16";
 const CACHE_DYNAMIC_NAME = "dynamic-v2";
 const STATIC_FILES = [
   "/",
@@ -6,6 +9,7 @@ const STATIC_FILES = [
   "/offline.html",
   "/src/js/app.js",
   "/src/js/feed.js",
+  "/src/js/idb.js",
   "/src/js/material.min.js",
   "/src/css/app.css",
   "/src/css/feed.css",
@@ -81,12 +85,19 @@ self.addEventListener("fetch", event => {
 
   if (event.request.url.indexOf(url) > -1) {
     event.respondWith(
-      caches.open(CACHE_DYNAMIC_NAME).then(cache => {
-        return fetch(event.request).then(res => {
-          // trimCache(CACHE_DYNAMIC_NAME, 9);
-          cache.put(event.request, res.clone());
-          return res;
-        });
+      fetch(event.request).then(res => {
+        let clonedRes = res.clone();
+        clearAllData("posts")
+          .then(() => {
+            return clonedRes.json();
+          })
+          .then(data => {
+            for (let key in data) {
+              writeData("posts", data[key]);
+            }
+          });
+
+        return res;
       })
     );
   } // Cache only
