@@ -169,3 +169,42 @@ self.addEventListener("fetch", event => {
 //     }
 //   });
 // }
+
+let url = "https://pwagram-a86f0.firebaseio.com/posts.json";
+
+self.addEventListener("sync", event => {
+  console.log("[Service Worker] Background syncing", event);
+  if (event.tag === "sync-new-posts") {
+    console.log("[Service Worker] Syncing new Posts");
+    event.waitUntil(
+      readAllData("sync-posts").then(data => {
+        for (let dt of data) {
+          fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json"
+            },
+            body: JSON.stringify({
+              id: dt.id,
+              title: dt.title,
+              location: dt.location,
+              image:
+                "https://firebasestorage.googleapis.com/v0/b/pwagram-a86f0.appspot.com/o/sf-boat.jpg?alt=media&token=fd21de64-14bb-442b-9a9a-2ec7aa785c60"
+            })
+          })
+            .then(res => {
+              // Here we clear the queue
+              console.log("Sent data ...", res);
+              if (res.ok) {
+                deleteItemFromData("sync-posts", dt.id); //Isnt working properly bcoz for loop is synchronous
+              }
+            })
+            .catch(err => {
+              console.log("Error while sending data", err);
+            });
+        }
+      })
+    );
+  }
+});
