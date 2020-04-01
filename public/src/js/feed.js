@@ -17,7 +17,7 @@ function openCreatePostModal() {
   if (!window.installPrompt.hasBeenShown) {
     window.deferredPrompt.prompt(); //This shows the banner
 
-    window.deferredPrompt.userChoice.then(function(choiceResult) {
+    window.deferredPrompt.userChoice.then(function (choiceResult) {
       console.log(choiceResult.outcome);
 
       if (choiceResult.outcome == "dismissed") {
@@ -100,10 +100,10 @@ let url = "https://pwagram-a86f0.firebaseio.com/posts.json";
 let networkDataReceived = false;
 
 fetch(url)
-  .then(function(res) {
+  .then(function (res) {
     return res.json();
   })
-  .then(function(data) {
+  .then(function (data) {
     networkDataReceived = true;
     console.log("from web ", data);
     let dataArray = [];
@@ -126,7 +126,7 @@ if ("indexedDB" in window) {
 // Listening to form submit
 
 const sendData = () => {
-  fetch(url, {
+  fetch("https://us-central1-pwagram-a86f0.cloudfunctions.net/storePostData", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

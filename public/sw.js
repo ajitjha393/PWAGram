@@ -170,7 +170,7 @@ self.addEventListener("fetch", event => {
 //   });
 // }
 
-let url = "https://pwagram-a86f0.firebaseio.com/posts.json";
+// let url = "https://pwagram-a86f0.firebaseio.com/posts.json";
 
 self.addEventListener("sync", event => {
   console.log("[Service Worker] Background syncing", event);
@@ -179,7 +179,7 @@ self.addEventListener("sync", event => {
     event.waitUntil(
       readAllData("sync-posts").then(data => {
         for (let dt of data) {
-          fetch(url, {
+          fetch("https://us-central1-pwagram-a86f0.cloudfunctions.net/storePostData", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -197,7 +197,10 @@ self.addEventListener("sync", event => {
               // Here we clear the queue
               console.log("Sent data ...", res);
               if (res.ok) {
-                deleteItemFromData("sync-posts", dt.id); //Isnt working properly bcoz for loop is synchronous
+                res.json()
+                  .then((resData) => {
+                    deleteItemFromData("sync-posts", resData.id);
+                  })
               }
             })
             .catch(err => {
