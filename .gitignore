@@ -1,3 +1,4 @@
 .idea
 node_modules
 functions/pwagram-fb-key.json
+.firebase
