@@ -59,27 +59,59 @@ const displayConfirmNotification = () => {
     }
 
     navigator.serviceWorker.ready.then(swreg => {
-      swreg.showNotification('Successfully subscribed (From SW)!', options)
+      swreg.showNotification('Successfully subscribed !', options)
     })
   }
 }
 
 // Creating a new or accessing created push subscription
 const configurePushSub = () => {
+  let reg
+
   if (!('serviceWorker' in navigator)) {
     return
   }
 
   navigator.serviceWorker.ready
     .then(swreg => {
+      reg = swreg
       return swreg.pushManager.getSubscription()
     })
     .then(sub => {
       if (sub === null) {
         // create new subscription
+        // This is for securing who send push messages (only us)
+        const vapidPublicKey =
+          'BEGetTUu4qE2r_SjRlWJerCGMZeeHwwkzODqFfEGbKUMySKSxaH3l3LYTrMlV1EA_UZGnoRucD8JMPzW-WQqUvE'
+
+        const convertedVapidPublicKey = urlBase64ToUint8Array(vapidPublicKey)
+
+        return reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedVapidPublicKey,
+        })
       } else {
         // We have a subscription
       }
+    })
+    .then(newSub => {
+      return fetch('https://pwagram-a86f0.firebaseio.com/subscriptions.json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(newSub),
+      })
+    })
+
+    .then(res => {
+      if (res.ok) {
+        displayConfirmNotification()
+      }
+    })
+    .catch(err => {
+      console.log('Some error occured...', err)
     })
 }
 

@@ -225,12 +225,44 @@ self.addEventListener('notificationclick', event => {
     console.log('Confirm was chosen')
   } else {
     console.log(action)
+    event.waitUntil(
+      clients.matchAll().then(clis => {
+        let client = clis.find(c => c.visibilityState === 'visible')
+
+        if (client !== undefined) {
+          client.navigate('http://localhost:8080')
+          client.focus()
+        } else {
+          clients.openWindow('http://localhost:8080')
+        }
+
+        notification.close()
+      })
+    )
   }
-  notification.close()
 })
 
 self.addEventListener('notificationclose', event => {
   console.log('Notification was closed', event)
 })
 
-// Push setup
+// Listening to push messages ... we send push message from our server
+self.addEventListener('push', event => {
+  console.log('Push Notification received...', event)
+  // Fallback in case payload data is not sent with push
+  let data = {
+    title: 'New notifs !',
+    content: 'You got some new notications!',
+  }
+  if (event.data) {
+    data = JSON.parse(event.data.text())
+  }
+
+  let options = {
+    body: data.content,
+    icon: '/src/images/icons/app-icon-96x96.png',
+    badge: '/src/images/icons/app-icon-96x96.png',
+  }
+
+  event.waitUntil(self.registration.showNotification(data.title, options))
+})
