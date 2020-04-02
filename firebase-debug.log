@@ -1,0 +1,13 @@
+[debug] [2020-04-02T07:50:06.483Z] ----------------------------------------------------------------------
+[debug] [2020-04-02T07:50:06.494Z] Command:       /usr/bin/node /usr/bin/firebase deploy
+[debug] [2020-04-02T07:50:06.495Z] CLI Version:   8.0.0
+[debug] [2020-04-02T07:50:06.495Z] Platform:      linux
+[debug] [2020-04-02T07:50:06.495Z] Node Version:  v13.10.1
+[debug] [2020-04-02T07:50:06.565Z] Time:          Thu Apr 02 2020 13:20:06 GMT+0530 (India Standard Time)
+[debug] [2020-04-02T07:50:06.566Z] ----------------------------------------------------------------------
+[debug] [2020-04-02T07:50:06.566Z] 
+[debug] [2020-04-02T07:50:06.632Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2020-04-02T07:50:06.633Z] > authorizing via signed-in user
+[debug] [2020-04-02T07:50:06.634Z] [iam] checking project pwagram-a86f0 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2020-04-02T07:50:06.638Z] >>> HTTP REQUEST POST https://cloudresourcemanager.googleapis.com/v1/projects/pwagram-a86f0:testIamPermissions  
+ {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get","firebasehosting.sites.update"]}
