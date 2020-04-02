@@ -8,11 +8,81 @@ var sharedMomentsArea = document.querySelector('#shared-moments')
 var form = document.querySelector('form')
 var titleInput = document.querySelector('#title')
 var locationInput = document.querySelector('#location')
+var videoPlayer = document.querySelector('#player')
+var canvasElement = document.querySelector('#canvas')
+var captureButton = document.querySelector('#capture-btn')
+var imagePicker = document.querySelector('#image-picker')
+var imagePickerArea = document.querySelector('#pick-image')
+
+// This is progressiveness
+function initializeMedia() {
+  if (!('mediaDevices' in navigator)) {
+    navigator.mediaDevices = {}
+  }
+
+  // Creating my own polyfill for accessing camera
+  if (!('getUserMedia' in navigator.mediaDevices)) {
+    navigator.mediaDevices.getUserMedia = function(constraints) {
+      let getUserMedia =
+        navigator.webkitGetUserMedia || navigator.mozGetUserMedia
+
+      if (!getUserMedia) {
+        return Promise.reject(new Error('Get User media is not supported :('))
+      }
+
+      return new Promise(function(resolve, reject) {
+        getUserMedia.call(navigator, constraints, resolve, reject)
+      })
+    }
+  }
+
+  navigator.mediaDevices
+    .getUserMedia({ video: true })
+    .then(stream => {
+      videoPlayer.srcObject = stream
+      videoPlayer.style.display = 'block'
+    })
+    .catch(err => {
+      console.log('Camera can not be accessed :(', err)
+      imagePickerArea.style.display = 'block'
+    })
+}
+
+// Take photo
+captureButton.addEventListener('click', event => {
+  canvasElement.style.display = 'block'
+  videoPlayer.style.display = 'none'
+  captureButton.style.display = 'none'
+
+  canvasElement.width = videoPlayer.videoWidth
+  canvasElement.height = videoPlayer.videoHeight
+
+  let context = canvasElement.getContext('2d')
+
+  context.drawImage(
+    videoPlayer,
+    0,
+    0,
+    videoPlayer.videoWidth,
+    videoPlayer.videoHeight // this keeps aspect ratio
+  )
+  // context.drawImage(
+  //   videoPlayer,
+  //   0,
+  //   0,
+  //   canvas.width,
+  //   videoPlayer.videoHeight / (videoPlayer.videoWidth / canvas.width) // this keeps aspect ratio
+  // )
+  videoPlayer.srcObject.getVideoTracks().forEach(track => {
+    track.stop()
+  })
+})
 
 function openCreatePostModal() {
   // createPostArea.style.display = "block";
 
   createPostArea.style.transform = 'translateY(0)'
+  initializeMedia()
 
   if (!window.installPrompt.hasBeenShown) {
     window.deferredPrompt.prompt() //This shows the banner
@@ -24,7 +94,12 @@ function openCreatePostModal() {
         console.log('User cancelled installation')
       } else {
         console.log('User added to home screen')
-      }
+      } // context.drawImage(
+      //   videoPlayer,
+      //   0,
+      //   0,
+      //   canvas.width,
+      //   videoPlayer.videoHeight / (videoPlayer.videoWidth / canvas.width) // this keeps aspect ratio
     })
     window.installPrompt.hasBeenShown = true
   }
@@ -32,6 +107,10 @@ function openCreatePostModal() {
 
 function closeCreatePostModal() {
   createPostArea.style.transform = 'translateY(100vh)'
+  imagePickerArea.style.display = 'none'
+  videoPlayer.style.display = 'none'
+  canvasElement.style.display = 'none'
+
   // createPostArea.style.display = "none";
 }
 
