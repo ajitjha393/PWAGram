@@ -1,54 +1,78 @@
-const functions = require('firebase-functions')
-const admin = require('firebase-admin')
-const cors = require('cors')({
-  origin: true,
-})
-const webpush = require('web-push')
-var formidable = require('formidable')
+var functions = require('firebase-functions')
+var admin = require('firebase-admin')
+var cors = require('cors')({ origin: true })
+var webpush = require('web-push')
+// var formidable = require('formidable')
 var fs = require('fs')
 var UUID = require('uuid-v4')
-
-const serviceAccount = require('./pwagram-fb-key.json')
-
-// This will allow access to users that are not on the same server as our app
+var os = require('os')
+var Busboy = require('busboy')
+var path = require('path')
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
 //
 
+var serviceAccount = require('./pwagram-fb-key.json')
+
 var gcconfig = {
   projectId: 'pwagram-a86f0',
-  keyFileName: 'pwagram-fb-key.json',
+  keyFilename: 'pwagram-fb-key.json',
 }
 
-var { Storage } = require('@google-cloud/storage')
-var gcs = new Storage(gcconfig)
+var gcs = require('@google-cloud/storage')(gcconfig)
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: 'https://pwagram-a86f0.firebaseio.com/',
 })
 
-exports.storePostData = functions.https.onRequest((request, response) => {
-  cors(request, response, () => {
+exports.storePostData = functions.https.onRequest(function(request, response) {
+  cors(request, response, function() {
     var uuid = UUID()
-    var formData = new formidable.IncomingForm()
-    formData.parse(request, function(err, fields, files) {
-      fs.rename(files.file.path, '/tmp/' + files.file.name)
-      var bucket = gcs.bucket('pwagram-a86f0.appspot.com')
 
+    const busboy = new Busboy({ headers: request.headers })
+    // These objects will store the values (file + fields) extracted from busboy
+    let upload
+    const fields = {}
+
+    // This callback will be invoked for each file uploaded
+    busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+      console.log(
+        `File [${fieldname}] filename: ${filename}, encoding: ${encoding}, mimetype: ${mimetype}`
+      )
+      const filepath = path.join(os.tmpdir(), filename)
+      upload = { file: filepath, type: mimetype }
+      file.pipe(fs.createWriteStream(filepath))
+    })
+
+    // This will invoked on every field detected
+    busboy.on('field', function(
+      fieldname,
+      val,
+      fieldnameTruncated,
+      valTruncated,
+      encoding,
+      mimetype
+    ) {
+      fields[fieldname] = val
+    })
+
+    // This callback will be invoked after all uploaded files are saved.
+    busboy.on('finish', () => {
+      var bucket = gcs.bucket('pwagram-a86f0.appspot.com')
       bucket.upload(
-        '/tmp/' + files.file.name,
+        upload.file,
         {
           uploadType: 'media',
           metadata: {
             metadata: {
-              contentType: files.file.type,
+              contentType: upload.type,
               firebaseStorageDownloadTokens: uuid,
             },
           },
         },
-        function(err, file) {
+        function(err, uploadedFile) {
           if (!err) {
             admin
               .database()
@@ -61,26 +85,24 @@ exports.storePostData = functions.https.onRequest((request, response) => {
                   'https://firebasestorage.googleapis.com/v0/b/' +
                   bucket.name +
                   '/o/' +
-                  encodeURIComponent(file.name) +
+                  encodeURIComponent(uploadedFile.name) +
                   '?alt=media&token=' +
                   uuid,
               })
-              .then(() => {
+              .then(function() {
                 webpush.setVapidDetails(
                   'mailto:ajitjha393@gmail.com',
                   'BEGetTUu4qE2r_SjRlWJerCGMZeeHwwkzODqFfEGbKUMySKSxaH3l3LYTrMlV1EA_UZGnoRucD8JMPzW-WQqUvE',
                   'uU1O4wI_FjCbjMzM2lv71GvBCmQMYXiMwSzwCSKevmI'
                 )
-
                 return admin
                   .database()
                   .ref('subscriptions')
                   .once('value')
               })
-              .then(subscriptions => {
-                subscriptions.forEach(sub => {
-                  // Alternative pushConfig = sub.val()
-                  let pushConfig = {
+              .then(function(subscriptions) {
+                subscriptions.forEach(function(sub) {
+                  var pushConfig = {
                     endpoint: sub.val().endpoint,
                     keys: {
                       auth: sub.val().keys.auth,
@@ -93,21 +115,19 @@ exports.storePostData = functions.https.onRequest((request, response) => {
                       pushConfig,
                       JSON.stringify({
                         title: 'New Post',
-                        content: 'New Post Added 🤩',
-                        openUrl: '/',
+                        content: 'New Post added!',
+                        openUrl: '/help',
                       })
                     )
-                    .catch(err => {
+                    .catch(function(err) {
                       console.log(err)
                     })
                 })
-
-                response.status(201).json({
-                  message: 'Data stored',
-                  id: fields.id,
-                })
+                response
+                  .status(201)
+                  .json({ message: 'Data stored', id: fields.id })
               })
-              .catch(err => {
+              .catch(function(err) {
                 response.status(500).json({ error: err })
               })
           } else {
@@ -116,5 +136,13 @@ exports.storePostData = functions.https.onRequest((request, response) => {
         }
       )
     })
+
+    // The raw bytes of the upload will be in request.rawBody.  Send it to busboy, and get
+    // a callback when it's finished.
+    busboy.end(request.rawBody)
+    // formData.parse(request, function(err, fields, files) {
+    //   fs.rename(files.file.path, "/tmp/" + files.file.name);
+    //   var bucket = gcs.bucket("YOUR_PROJECT_ID.appspot.com");
+    // });
   })
 })
