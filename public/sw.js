@@ -1,8 +1,8 @@
 importScripts('/src/js/idb.js')
 importScripts('/src/js/utility.js')
 
-const CACHE_STATIC_NAME = 'static-v0'
-const CACHE_DYNAMIC_NAME = 'dynamic-v0'
+const CACHE_STATIC_NAME = 'static-v1'
+const CACHE_DYNAMIC_NAME = 'dynamic-v1'
 const STATIC_FILES = [
   '/',
   '/index.html',
@@ -32,12 +32,12 @@ const STATIC_FILES = [
 //   });
 // }
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing service worker ...', event)
   // Precaching of app assets (app shell)
   event.waitUntil(
     // This is done for versioning of cache
-    caches.open(CACHE_STATIC_NAME).then(cache => {
+    caches.open(CACHE_STATIC_NAME).then((cache) => {
       console.log('[Service Worker] Precaching app shell')
       // cache.add("/");
       // cache.add("/index.html");
@@ -50,14 +50,14 @@ self.addEventListener('install', event => {
 })
 
 // Here we do cleanup of our previous cache
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activating service worker ...', event)
 
   // Wait until we done with cleanup
   event.waitUntil(
-    caches.keys().then(keyList => {
+    caches.keys().then((keyList) => {
       return Promise.all(
-        keyList.map(key => {
+        keyList.map((key) => {
           if (key !== CACHE_STATIC_NAME && key !== CACHE_DYNAMIC_NAME) {
             console.log('[Service Worker] removing old cache ... ', key)
             return caches.delete(key)
@@ -81,18 +81,18 @@ function isInArray(string, array) {
 
 // Cache then network
 
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   let url = 'https://pwagram-a86f0.firebaseio.com/posts.json'
 
   if (event.request.url.indexOf(url) > -1) {
     event.respondWith(
-      fetch(event.request).then(res => {
+      fetch(event.request).then((res) => {
         let clonedRes = res.clone()
         clearAllData('posts')
           .then(() => {
             return clonedRes.json()
           })
-          .then(data => {
+          .then((data) => {
             for (let key in data) {
               writeData('posts', data[key])
             }
@@ -109,21 +109,21 @@ self.addEventListener('fetch', event => {
   else {
     event.respondWith(
       //     // in cache (key:value pair is stored) where key = request
-      caches.match(event.request).then(response => {
+      caches.match(event.request).then((response) => {
         if (response) {
           return response
         } else {
           // Adding to cache dynamically
           return fetch(event.request)
-            .then(res => {
-              return caches.open(CACHE_DYNAMIC_NAME).then(cache => {
+            .then((res) => {
+              return caches.open(CACHE_DYNAMIC_NAME).then((cache) => {
                 // trimCache(CACHE_DYNAMIC_NAME, 9);
                 cache.put(event.request.url, res.clone())
                 return res
               })
             })
-            .catch(err => {
-              return caches.open(CACHE_STATIC_NAME).then(cache => {
+            .catch((err) => {
+              return caches.open(CACHE_STATIC_NAME).then((cache) => {
                 if (event.request.headers.get('accept').includes('text/html'))
                   return cache.match('/offline.html')
               })
@@ -173,12 +173,12 @@ self.addEventListener('fetch', event => {
 
 // let url = "https://pwagram-a86f0.firebaseio.com/posts.json";
 
-self.addEventListener('sync', event => {
+self.addEventListener('sync', (event) => {
   console.log('[Service Worker] Background syncing', event)
   if (event.tag === 'sync-new-posts') {
     console.log('[Service Worker] Syncing new Posts')
     event.waitUntil(
-      readAllData('sync-posts').then(data => {
+      readAllData('sync-posts').then((data) => {
         for (let dt of data) {
           var postData = new FormData()
           postData.append('id', dt.id)
@@ -193,16 +193,16 @@ self.addEventListener('sync', event => {
               body: postData,
             }
           )
-            .then(res => {
+            .then((res) => {
               // Here we clear the queue
               console.log('Sent data ...', res)
               if (res.ok) {
-                res.json().then(resData => {
+                res.json().then((resData) => {
                   deleteItemFromData('sync-posts', resData.id)
                 })
               }
             })
-            .catch(err => {
+            .catch((err) => {
               console.log('Error while sending data', err)
             })
         }
@@ -212,7 +212,7 @@ self.addEventListener('sync', event => {
 })
 
 // Notification interaction
-self.addEventListener('notificationclick', event => {
+self.addEventListener('notificationclick', (event) => {
   let notification = event.notification
   let action = event.action
 
@@ -223,8 +223,8 @@ self.addEventListener('notificationclick', event => {
   } else {
     console.log(action)
     event.waitUntil(
-      clients.matchAll().then(clis => {
-        let client = clis.find(c => c.visibilityState === 'visible')
+      clients.matchAll().then((clis) => {
+        let client = clis.find((c) => c.visibilityState === 'visible')
 
         if (client !== undefined) {
           client.navigate(notification.data.url)
@@ -239,12 +239,12 @@ self.addEventListener('notificationclick', event => {
   }
 })
 
-self.addEventListener('notificationclose', event => {
+self.addEventListener('notificationclose', (event) => {
   console.log('Notification was closed', event)
 })
 
 // Listening to push messages ... we send push message from our server
-self.addEventListener('push', event => {
+self.addEventListener('push', (event) => {
   console.log('Push Notification received...', event)
   // Fallback in case payload data is not sent with push
   let data = {
