@@ -194,11 +194,13 @@ closeCreatePostModalButton.addEventListener('click', closeCreatePostModal)
 
 function createCard(data) {
   var cardWrapper = document.createElement('div')
+ 
   cardWrapper.className = 'shared-moment-card mdl-card mdl-shadow--2dp'
   var cardTitle = document.createElement('div')
   cardTitle.className = 'mdl-card__title'
   cardTitle.style.backgroundImage = 'url(' + data.image + ')'
   cardTitle.style.backgroundSize = 'cover'
+  cardTitle.style.backgroundPosition = 'center'
 
   cardWrapper.appendChild(cardTitle)
   var cardTitleTextElement = document.createElement('h2')

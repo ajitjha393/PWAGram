@@ -21,7 +21,8 @@
   margin: auto;
 }
 
-#create-post #pick-image, #location-loader {
+#create-post #pick-image,
+#location-loader {
   display: none;
 }
 
@@ -53,7 +54,7 @@
 }
 
 .shared-moment-card.mdl-card {
-  margin: 10px auto;
+  margin: 20px auto;
   width: 80%;
 }
 
@@ -70,17 +71,17 @@
 }
 
 .shared-moment-card .mdl-card__title {
-  height: 140px;
+  height: 360px;
 }
 
 @media (min-height: 700px) {
   .shared-moment-card .mdl-card__title {
-    height: 160px;
+    height: 400px;
   }
 }
 
 @media (min-height: 1000px) {
   .shared-moment-card .mdl-card__title {
-    height: 200px;
+    height: 480px;
   }
 }

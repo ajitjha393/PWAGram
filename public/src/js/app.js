@@ -10,11 +10,11 @@ const enableNotificationsButtons = document.querySelectorAll(
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
-    .register('/sw.js')
+    .register('/service-worker.js')
     .then(() => {
       console.log('Service worker registered')
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err)
     })
 }
@@ -25,7 +25,7 @@ window.installPrompt = {
 }
 
 // This prevents default installation of app
-window.addEventListener('beforeinstallprompt', function(event) {
+window.addEventListener('beforeinstallprompt', function (event) {
   console.log('beforeinstallprompt fired')
   event.preventDefault()
   window.deferredPrompt = event
@@ -58,7 +58,7 @@ const displayConfirmNotification = () => {
       ],
     }
 
-    navigator.serviceWorker.ready.then(swreg => {
+    navigator.serviceWorker.ready.then((swreg) => {
       swreg.showNotification('Successfully subscribed !', options)
     })
   }
@@ -73,11 +73,11 @@ const configurePushSub = () => {
   }
 
   navigator.serviceWorker.ready
-    .then(swreg => {
+    .then((swreg) => {
       reg = swreg
       return swreg.pushManager.getSubscription()
     })
-    .then(sub => {
+    .then((sub) => {
       if (sub === null) {
         // create new subscription
         // This is for securing who send push messages (only us)
@@ -94,7 +94,7 @@ const configurePushSub = () => {
         // We have a subscription
       }
     })
-    .then(newSub => {
+    .then((newSub) => {
       return fetch('https://pwagram-a86f0.firebaseio.com/subscriptions.json', {
         method: 'POST',
         headers: {
@@ -105,19 +105,19 @@ const configurePushSub = () => {
       })
     })
 
-    .then(res => {
+    .then((res) => {
       if (res.ok) {
         displayConfirmNotification()
       }
     })
-    .catch(err => {
+    .catch((err) => {
       console.log('Some error occured...', err)
     })
 }
 
 const askForNotificationPermisssion = () => {
   //  Allows both notification and push permission
-  Notification.requestPermission(result => {
+  Notification.requestPermission((result) => {
     console.log('User Choice', result)
     if (result !== 'granted') {
       console.log('No notification permission granted ')
