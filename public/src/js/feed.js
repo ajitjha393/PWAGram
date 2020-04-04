@@ -23,6 +23,8 @@ locationBtn.addEventListener('click', (event) => {
     return
   }
 
+  let sawAlert = false
+
   locationBtn.style.display = 'none'
   locationLoader.style.display = 'block'
 
@@ -43,7 +45,13 @@ locationBtn.addEventListener('click', (event) => {
       console.log(err)
       locationBtn.style.display = 'inline'
       locationLoader.style.display = 'none'
-      alert("Couldn't fetch location 😞, please add manually")
+      if (!sawAlert) {
+        sawAlert = true
+        alert(
+          "Couldn't fetch location 😞 , please add manually or check internet connection"
+        )
+      }
+
       fetchedLocation = { lat: null, lng: null }
     },
     { timeout: 7000 }
@@ -129,7 +137,9 @@ imagePicker.addEventListener('change', (event) => {
 function openCreatePostModal() {
   // createPostArea.style.display = "block";
 
-  createPostArea.style.transform = 'translateY(0)'
+  setTimeout(() => {
+    createPostArea.style.transform = 'translateY(0)'
+  }, 1)
   initializeMedia()
   initializeLocation()
 
@@ -155,18 +165,21 @@ function openCreatePostModal() {
 }
 
 function closeCreatePostModal() {
-  createPostArea.style.transform = 'translateY(100vh)'
   imagePickerArea.style.display = 'none'
   videoPlayer.style.display = 'none'
   canvasElement.style.display = 'none'
   locationBtn.style.display = 'inline'
   locationLoader.style.display = 'none'
+  captureButton.style.display = 'inline'
 
   if (videoPlayer.srcObject) {
     videoPlayer.srcObject.getVideoTracks().forEach((track) => {
       track.stop()
     })
   }
+  setTimeout(() => {
+    createPostArea.style.transform = 'translateY(100vh)'
+  }, 1)
 }
 
 function clearCards() {
