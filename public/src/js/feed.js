@@ -14,6 +14,47 @@ var captureButton = document.querySelector('#capture-btn')
 var imagePicker = document.querySelector('#image-picker')
 var imagePickerArea = document.querySelector('#pick-image')
 var picture
+var locationBtn = document.querySelector('#location-btn')
+var locationLoader = document.querySelector('#location-loader')
+var fetchedLocation = { lat: null, lng: null }
+
+locationBtn.addEventListener('click', (event) => {
+  if (!('geolocation' in navigator)) {
+    return
+  }
+
+  locationBtn.style.display = 'none'
+  locationLoader.style.display = 'block'
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      locationBtn.style.display = 'inline'
+      locationLoader.style.display = 'none'
+      fetchedLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      }
+      locationInput.value = `In India 🇮🇳(${fetchedLocation.lat.toFixed(
+        2
+      )} ,  ${fetchedLocation.lng.toFixed(2)}) `
+      document.querySelector('#manual-location').classList.add('is-focused')
+    },
+    (err) => {
+      console.log(err)
+      locationBtn.style.display = 'inline'
+      locationLoader.style.display = 'none'
+      alert("Couldn't fetch location 😞, please add manually")
+      fetchedLocation = { lat: null, lng: null }
+    },
+    { timeout: 7000 }
+  )
+})
+
+function initializeLocation() {
+  if (!('geolocation' in navigator)) {
+    locationBtn.style.display = 'none'
+  }
+}
 
 // This is progressiveness
 function initializeMedia() {
@@ -23,7 +64,7 @@ function initializeMedia() {
 
   // Creating my own polyfill for accessing camera
   if (!('getUserMedia' in navigator.mediaDevices)) {
-    navigator.mediaDevices.getUserMedia = function(constraints) {
+    navigator.mediaDevices.getUserMedia = function (constraints) {
       let getUserMedia =
         navigator.webkitGetUserMedia || navigator.mozGetUserMedia
 
@@ -31,7 +72,7 @@ function initializeMedia() {
         return Promise.reject(new Error('Get User media is not supported :('))
       }
 
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         getUserMedia.call(navigator, constraints, resolve, reject)
       })
     }
@@ -39,18 +80,19 @@ function initializeMedia() {
 
   navigator.mediaDevices
     .getUserMedia({ video: true })
-    .then(stream => {
+    .then((stream) => {
       videoPlayer.srcObject = stream
       videoPlayer.style.display = 'block'
     })
-    .catch(err => {
+    .catch((err) => {
       console.log('Camera can not be accessed :(', err)
       imagePickerArea.style.display = 'block'
+      captureButton.style.display = 'none'
     })
 }
 
 // Take photo
-captureButton.addEventListener('click', event => {
+captureButton.addEventListener('click', (event) => {
   canvasElement.style.display = 'block'
   videoPlayer.style.display = 'none'
   captureButton.style.display = 'none'
@@ -74,7 +116,7 @@ captureButton.addEventListener('click', event => {
   //   canvas.width,
   //   videoPlayer.videoHeight / (videoPlayer.videoWidth / canvas.width) // this keeps aspect ratio
   // )
-  videoPlayer.srcObject.getVideoTracks().forEach(track => {
+  videoPlayer.srcObject.getVideoTracks().forEach((track) => {
     track.stop()
   })
   picture = dataURItoBlob(canvasElement.toDataURL())
@@ -89,11 +131,12 @@ function openCreatePostModal() {
 
   createPostArea.style.transform = 'translateY(0)'
   initializeMedia()
+  initializeLocation()
 
   if (!window.installPrompt.hasBeenShown) {
     window.deferredPrompt.prompt() //This shows the banner
 
-    window.deferredPrompt.userChoice.then(function(choiceResult) {
+    window.deferredPrompt.userChoice.then(function (choiceResult) {
       console.log(choiceResult.outcome)
 
       if (choiceResult.outcome == 'dismissed') {
@@ -116,8 +159,14 @@ function closeCreatePostModal() {
   imagePickerArea.style.display = 'none'
   videoPlayer.style.display = 'none'
   canvasElement.style.display = 'none'
+  locationBtn.style.display = 'inline'
+  locationLoader.style.display = 'none'
 
-  // createPostArea.style.display = "none";
+  if (videoPlayer.srcObject) {
+    videoPlayer.srcObject.getVideoTracks().forEach((track) => {
+      track.stop()
+    })
+  }
 }
 
 function clearCards() {
@@ -172,7 +221,7 @@ function createCard(data) {
   sharedMomentsArea.appendChild(cardWrapper)
 }
 
-const updateUI = data => {
+const updateUI = (data) => {
   clearCards()
   for (let i = 0; i < data.length; i++) {
     createCard(data[i])
@@ -185,10 +234,10 @@ let url = 'https://pwagram-a86f0.firebaseio.com/posts.json'
 let networkDataReceived = false
 
 fetch(url)
-  .then(function(res) {
+  .then(function (res) {
     return res.json()
   })
-  .then(function(data) {
+  .then(function (data) {
     networkDataReceived = true
     console.log('from web ', data)
     let dataArray = []
@@ -200,7 +249,7 @@ fetch(url)
   })
 
 if ('indexedDB' in window) {
-  readAllData('posts').then(data => {
+  readAllData('posts').then((data) => {
     if (!networkDataReceived) {
       console.log('From Cache', data)
       updateUI(data)
@@ -217,19 +266,21 @@ const sendData = () => {
   postData.append('id', id)
   postData.append('title', titleInput.value)
   postData.append('location', locationInput.value)
+  postData.append('rawLocationLat', fetchedLocation.lat)
+  postData.append('rawLocationLng', fetchedLocation.lng)
   postData.append('file', picture, id + '.png')
 
   fetch('https://us-central1-pwagram-a86f0.cloudfunctions.net/storePostData', {
     method: 'POST',
 
     body: postData,
-  }).then(res => {
+  }).then((res) => {
     console.log('Sent data ...', res)
     updateUI()
   })
 }
 
-form.addEventListener('submit', event => {
+form.addEventListener('submit', (event) => {
   event.preventDefault()
 
   if (titleInput.value.trim() === '' || locationInput.value.trim() === '') {
@@ -241,12 +292,13 @@ form.addEventListener('submit', event => {
 
   // SyncManager api providesus with sync features
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
-    navigator.serviceWorker.ready.then(sw => {
+    navigator.serviceWorker.ready.then((sw) => {
       let post = {
         id: new Date().toISOString(),
         title: titleInput.value.trim(),
         location: locationInput.value.trim(),
         picture: picture,
+        rawLocation: fetchedLocation,
       }
       writeData('sync-posts', post)
         .then(() => {
@@ -260,7 +312,7 @@ form.addEventListener('submit', event => {
 
           snackbarContainer.MaterialSnackbar.showSnackbar(data)
         })
-        .catch(err => {
+        .catch((err) => {
           console.log('Something failed... ', err)
         })
     })

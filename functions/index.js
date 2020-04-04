@@ -27,8 +27,8 @@ admin.initializeApp({
   databaseURL: 'https://pwagram-a86f0.firebaseio.com/',
 })
 
-exports.storePostData = functions.https.onRequest(function(request, response) {
-  cors(request, response, function() {
+exports.storePostData = functions.https.onRequest(function (request, response) {
+  cors(request, response, function () {
     var uuid = UUID()
 
     const busboy = new Busboy({ headers: request.headers })
@@ -47,7 +47,7 @@ exports.storePostData = functions.https.onRequest(function(request, response) {
     })
 
     // This will invoked on every field detected
-    busboy.on('field', function(
+    busboy.on('field', function (
       fieldname,
       val,
       fieldnameTruncated,
@@ -72,7 +72,7 @@ exports.storePostData = functions.https.onRequest(function(request, response) {
             },
           },
         },
-        function(err, uploadedFile) {
+        function (err, uploadedFile) {
           if (!err) {
             admin
               .database()
@@ -81,6 +81,10 @@ exports.storePostData = functions.https.onRequest(function(request, response) {
                 id: fields.id,
                 title: fields.title,
                 location: fields.location,
+                rawLocation: {
+                  lat: fields.rawLocationLat,
+                  lng: fields.rawLocationLng,
+                },
                 image:
                   'https://firebasestorage.googleapis.com/v0/b/' +
                   bucket.name +
@@ -89,19 +93,16 @@ exports.storePostData = functions.https.onRequest(function(request, response) {
                   '?alt=media&token=' +
                   uuid,
               })
-              .then(function() {
+              .then(function () {
                 webpush.setVapidDetails(
                   'mailto:ajitjha393@gmail.com',
                   'BEGetTUu4qE2r_SjRlWJerCGMZeeHwwkzODqFfEGbKUMySKSxaH3l3LYTrMlV1EA_UZGnoRucD8JMPzW-WQqUvE',
                   'uU1O4wI_FjCbjMzM2lv71GvBCmQMYXiMwSzwCSKevmI'
                 )
-                return admin
-                  .database()
-                  .ref('subscriptions')
-                  .once('value')
+                return admin.database().ref('subscriptions').once('value')
               })
-              .then(function(subscriptions) {
-                subscriptions.forEach(function(sub) {
+              .then(function (subscriptions) {
+                subscriptions.forEach(function (sub) {
                   var pushConfig = {
                     endpoint: sub.val().endpoint,
                     keys: {
@@ -119,7 +120,7 @@ exports.storePostData = functions.https.onRequest(function(request, response) {
                         openUrl: '/help',
                       })
                     )
-                    .catch(function(err) {
+                    .catch(function (err) {
                       console.log(err)
                     })
                 })
@@ -127,7 +128,7 @@ exports.storePostData = functions.https.onRequest(function(request, response) {
                   .status(201)
                   .json({ message: 'Data stored', id: fields.id })
               })
-              .catch(function(err) {
+              .catch(function (err) {
                 response.status(500).json({ error: err })
               })
           } else {
