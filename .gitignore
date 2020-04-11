@@ -4,3 +4,4 @@ functions/pwagram-fb-key.json
 .firebase
 .vscode
 .eslintrc
+.prettierrc

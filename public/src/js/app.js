@@ -4,7 +4,7 @@
 
 // If path starts with / it means root folder
 
-const enableNotificationsButtons = document.querySelectorAll(
+var enableNotificationsButtons = document.querySelectorAll(
   '.enable-notifications'
 )
 
